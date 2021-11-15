@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response
 from flask_sqlalchemy import SQLAlchemy
 
 webapp = Flask(__name__)
@@ -21,6 +21,14 @@ db.create_all()
 
 @webapp.route("/", methods=["GET", "POST"])
 def index():
+    response = make_response(render_template("index.html"))
+    response.set_cookie("email", "email@email.com")
+
+    return response
+
+
+@webapp.route("/chat", methods=["GET", "POST"])
+def chat():
     username = None
     if request.method == "POST":
         username = request.form.get("username")
@@ -35,7 +43,7 @@ def index():
 
     messages = Message.query.all()
 
-    return render_template("index.html", username=username, messages=messages)
+    return render_template("chat.html", username=username, messages=messages)
 
 
 @webapp.route("/delete", methods=["GET"])
@@ -50,7 +58,7 @@ def delete():
     username = request.args.get("username")
     messages = Message.query.all()
 
-    return render_template("index.html", username=username, messages=messages)
+    return render_template("chat.html", username=username, messages=messages)
 
 if __name__ == "__main__":
     webapp.run(use_reloader=True)

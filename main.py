@@ -1,8 +1,10 @@
+import os
 from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 
 webapp = Flask(__name__)
-webapp.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///db.sqlite3"
+webapp.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///db.sqlite3").replace("postgres://",
+                                                                                                   "postgresql://", 1)
 webapp.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 

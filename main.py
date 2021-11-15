@@ -19,9 +19,26 @@ class Message(db.Model):
 db.create_all()
 
 
-@webapp.route("/", methods=["GET", "POST"])
+@webapp.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    username = request.cookies.get("remember_user")
+
+    return render_template("index.html", username=username)
+
+
+@webapp.route("/login", methods=["Post"])
+def login():
+    username = request.form.get("username")
+    remember_me = request.form.get("remember")
+
+    messages = Message.query.all()
+    response = make_response(render_template("chat.html", username=username, messages=messages))
+    if remember_me:
+        response.set_cookie("remember_user", username)
+    else:
+        response.set_cookie("remember_user", "")
+
+    return response
 
 
 @webapp.route("/chat", methods=["GET", "POST"])

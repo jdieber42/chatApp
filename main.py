@@ -21,10 +21,7 @@ db.create_all()
 
 @webapp.route("/", methods=["GET", "POST"])
 def index():
-    response = make_response(render_template("index.html"))
-    response.set_cookie("email", "email@email.com")
-
-    return response
+    return render_template("index.html")
 
 
 @webapp.route("/chat", methods=["GET", "POST"])

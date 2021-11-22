@@ -1,0 +1,18 @@
+{% extends "base_content.html" %}
+
+{% block content %}
+    <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+      <h1 class="display-4">Profile Edit</h1>
+    </div>
+    <div class="container">
+        <form method="post" action="/profile/edit">
+            <p>
+                <strong>Your name:</strong>
+                <input type="text" value="{{user.username}}" name="username">
+            </p>
+            <p><strong>Your email:</strong> Email</p>
+
+            <input type="submit" value="Change Profile"> <a href="/profile">Cancel</a>
+        </form>
+    </div>
+{% endblock content %}

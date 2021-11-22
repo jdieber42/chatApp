@@ -1,0 +1,14 @@
+{% extends "base_content.html" %}
+
+{% block content %}
+    <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+      <h1 class="display-4">Profile</h1>
+    </div>
+    <div class="container">
+        <p><strong>Your name:</strong> {{user.username}}</p>
+        <p><strong>Your email:</strong> Email</p>
+
+        <p><a href="/profile/edit">Edit profile</a> </p>
+        <p><a href="/profile/delete">Delete profile</a> </p>
+    </div>
+{% endblock content %}

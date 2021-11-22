@@ -17,6 +17,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=False, nullable=False)
     password = db.Column(db.String, nullable=False)
+    deleted = db.Column(db.Boolean, nullable=False)
     messages = db.relationship('Message', backref='user', lazy=True)
     session_token = db.Column(db.String, unique=False)
 
@@ -46,9 +47,12 @@ def login():
 
     user_model = db.session.query(User).filter(User.username == username).first()
     if not user_model:
-        user_model = User(username=username, password=hashlib.sha256(password.encode()).hexdigest())
+        user_model = User(username=username, deleted=False, password=hashlib.sha256(password.encode()).hexdigest())
         db.session.add(user_model)
         db.session.commit()
+
+    if user_model.deleted:
+        return render_template("index.html", error="No active user!")
 
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
     if hashed_password != user_model.password:
@@ -75,6 +79,8 @@ def login():
 @webapp.route("/logout", methods=["GET"])
 def logout():
     session_token = request.cookies.get("session_token")
+    if not session_token:
+        return render_template("index.html", error="User is not logged in!")
 
     response = make_response(render_template("index.html"))
     if session_token:
@@ -85,11 +91,10 @@ def logout():
 
 @webapp.route("/chat", methods=["GET", "POST"])
 def chat():
-    session_token = request.cookies.get("session_token")
-    if not session_token:
+    user_model = check_user(request)
+    if not user_model:
         return render_template("index.html", error="User is not logged in!")
 
-    user_model = db.session.query(User).filter(User.session_token == session_token).one()
     if request.method == "POST":
         message = request.form.get("message")
 
@@ -105,15 +110,14 @@ def chat():
 
 @webapp.route("/delete", methods=["GET"])
 def delete():
-    session_token = request.cookies.get("session_token")
-    if not session_token:
+    user_model = check_user(request)
+    if not user_model:
         return render_template("index.html", error="User is not logged in!")
 
     message_id = request.args.get("id")
 
     print("delete {}".format(message_id))
 
-    user_model = db.session.query(User).filter(User.session_token == session_token).one()
     message_model = db.session.query(Message).filter(Message.id == message_id).first()
 
     if message_model in user_model.messages:
@@ -123,6 +127,64 @@ def delete():
     messages = Message.query.all()
 
     return render_template("chat.html", username=user_model.username, messages=messages)
+
+
+@webapp.route("/profile", methods=["GET"])
+def profile():
+    user_model = check_user(request)
+    if not user_model:
+        return render_template("index.html", error="User is not logged in!")
+
+    return render_template("profile.html", user=user_model)
+
+
+@webapp.route("/profile/edit", methods=["GET", "POST"])
+def profile_edit():
+    user_model = check_user(request)
+    if not user_model:
+        return render_template("index.html", error="User is not logged in!")
+
+    if request.method == "POST":
+        user_model.username = request.form.get("username")
+
+        db.session.add(user_model)
+        db.session.commit()
+
+        return render_template("profile.html", user=user_model)
+    else:
+        return render_template("profile_edit.html", user=user_model)
+
+
+@webapp.route("/profile/delete", methods=["GET"])
+def profile_delete():
+    user_model = check_user(request)
+    if not user_model:
+        return render_template("index.html", error="User is not logged in!")
+
+    user_model.deleted = True
+    db.session.add(user_model)
+    db.session.commit()
+
+    return render_template("index.html")
+
+
+def check_session(request):
+    session_token = request.cookies.get("session_token")
+    if not session_token:
+        return None
+    return session_token
+
+
+def check_user(request):
+    session_token = check_session(request)
+    if not session_token:
+        return None
+
+    user_model = db.session.query(User).filter(User.session_token == session_token).one()
+    if user_model.deleted:
+        return None
+    return user_model
+
 
 if __name__ == "__main__":
     webapp.run(use_reloader=True)

@@ -30,7 +30,7 @@
                     <b>{{ msg.user.username }}</b>
                     {{ msg.message }}
                     {% if msg.user.username == username %}
-                      <a class="btn btn-outline-primary btn-sm" href="/delete?id={{msg.id}}">Delete</a>
+                      <a class="btn btn-outline-primary btn-sm" href="/message/delete/{{msg.id}}">Delete</a>
                     {% endif %}
                 </div>
 

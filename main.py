@@ -89,7 +89,7 @@ def logout():
     return response
 
 
-@webapp.route("/chat", methods=["GET", "POST"])
+@webapp.route("/message", methods=["GET", "POST"])
 def chat():
     user_model = check_user(request)
     if not user_model:
@@ -108,17 +108,15 @@ def chat():
     return render_template("chat.html", username=user_model.username, messages=messages)
 
 
-@webapp.route("/delete", methods=["GET"])
-def delete():
+@webapp.route("/message/delete/<message_id>", methods=["GET"])
+def delete(message_id):
     user_model = check_user(request)
     if not user_model:
         return render_template("index.html", error="User is not logged in!")
 
-    message_id = request.args.get("id")
-
     print("delete {}".format(message_id))
 
-    message_model = db.session.query(Message).filter(Message.id == message_id).first()
+    message_model = db.session.query(Message).filter(Message.id == int(message_id)).first()
 
     if message_model in user_model.messages:
         db.session.delete(message_model)
@@ -166,6 +164,28 @@ def profile_delete():
     db.session.commit()
 
     return render_template("index.html")
+
+
+@webapp.route("/user", methods=["GET"])
+def user():
+    user_model = check_user(request)
+    if not user_model:
+        return render_template("index.html", error="User is not logged in!")
+
+    users = User.query.all()
+
+    return render_template("user.html", user=user_model, users=users)
+
+
+@webapp.route("/user/<user_id>", methods=["GET"])
+def user_edit(user_id):
+    user_model = check_user(request)
+    if not user_model:
+        return render_template("index.html", error="User is not logged in!")
+
+    user_model_details = db.session.query(User).filter(User.id == int(user_id)).one()
+
+    return render_template("user_details.html", user=user_model, user_details=user_model_details)
 
 
 def check_session(request):

@@ -15,7 +15,8 @@ db = SQLAlchemy(webapp)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, unique=False, nullable=False)
+    username = db.Column(db.String, unique=True, nullable=False)
+    email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
     deleted = db.Column(db.Boolean, nullable=False)
     messages = db.relationship('Message', backref='user', lazy=True)
@@ -47,9 +48,7 @@ def login():
 
     user_model = db.session.query(User).filter(User.username == username).first()
     if not user_model:
-        user_model = User(username=username, deleted=False, password=hashlib.sha256(password.encode()).hexdigest())
-        db.session.add(user_model)
-        db.session.commit()
+        return render_template("index.html", error="Wrong username/password!")
 
     if user_model.deleted:
         return render_template("index.html", error="No active user!")
@@ -136,6 +135,33 @@ def profile():
     return render_template("profile.html", user=user_model)
 
 
+@webapp.route("/profile/create", methods=["GET", "POST"])
+def profile_create():
+    if request.method == "GET":
+        return render_template("register.html")
+
+    username = request.form.get("username")
+
+    email = request.form.get("email")
+
+    password = request.form.get("password")
+    password_again = request.form.get("password_again")
+
+    if password != password_again:
+        return render_template("register.html", error="Password and password again must match!")
+
+    user_model = db.session.query(User).filter(User.username == username).first()
+    if user_model:
+        return render_template("register.html", error="Username is already used!")
+
+    user_model = User(username=username, deleted=False, email=email,
+                      password=hashlib.sha256(password.encode()).hexdigest())
+    db.session.add(user_model)
+    db.session.commit()
+
+    return render_template("index.html")
+
+
 @webapp.route("/profile/edit", methods=["GET", "POST"])
 def profile_edit():
     user_model = check_user(request)
@@ -144,6 +170,7 @@ def profile_edit():
 
     if request.method == "POST":
         user_model.username = request.form.get("username")
+        user_model.email = request.form.get("email")
 
         db.session.add(user_model)
         db.session.commit()

@@ -34,9 +34,7 @@ db.create_all()
 
 @webapp.route("/", methods=["GET"])
 def index():
-    username = request.cookies.get("remember_user")
-
-    return render_template("index.html", username=username)
+    return render_template("index.html")
 
 
 @webapp.route("/login", methods=["Post"])
